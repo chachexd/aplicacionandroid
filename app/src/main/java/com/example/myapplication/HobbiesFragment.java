@@ -3,69 +3,100 @@ package com.example.myapplication;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;  // Para los logs
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ListView;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.DB.DBConexion;
-import com.example.myapplication.R;
-import com.example.myapplication.HobbyAdapter;
+
+import java.util.ArrayList;
 
 public class HobbiesFragment extends Fragment {
 
-    private ListView listViewHobbies;
+    private RecyclerView recyclerViewHobbies;
     private Button btnAddHobby;
     private DBConexion dbConexion;
     private SQLiteDatabase db;
-    private HobbyAdapter hobbyAdapter;
-    private int usuarioId; // ID del usuario que ha iniciado sesión
+    private ControladorRecyclerView controladorRecyclerView;
+    private int usuarioId;
 
     public HobbiesFragment(int usuarioId) {
-        this.usuarioId = usuarioId; // Recibir el ID del usuario
+        this.usuarioId = usuarioId;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_hobbies, container, false);
 
-        listViewHobbies = view.findViewById(R.id.listViewHobbies);
+        recyclerViewHobbies = view.findViewById(R.id.recyclerViewHobbies);
         btnAddHobby = view.findViewById(R.id.btnAddHobby);
 
+        // Configurar RecyclerView
+        recyclerViewHobbies.setLayoutManager(new LinearLayoutManager(getActivity()));
         dbConexion = new DBConexion(getActivity());
         db = dbConexion.getReadableDatabase();
 
-        // Obtener solo los hobbies del usuario actual
-        Cursor cursor = dbConexion.selectHobbiesDeUsuario(db, usuarioId);
-        hobbyAdapter = new HobbyAdapter(getActivity(), cursor);
-        listViewHobbies.setAdapter(hobbyAdapter);
+        // Cargar los hobbies del usuario
+        cargarHobbies();
 
         // Acción al pulsar el botón "Añadir Hobby"
-        btnAddHobby.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Crear un nuevo fragmento de diálogo para añadir hobby
-                AddHobbyDialogFragment addHobbyDialog = new AddHobbyDialogFragment();
-
-                // Pasar el usuarioId al diálogo
-                Bundle args = new Bundle();
-                args.putInt("usuarioId", usuarioId); // pasamos el usuarioId
-                addHobbyDialog.setArguments(args);
-
-                // Mostrar el diálogo
-                addHobbyDialog.show(getFragmentManager(), "AddHobbyDialog");
-            }
+        btnAddHobby.setOnClickListener(v -> {
+            AddHobbyDialogFragment addHobbyDialog = new AddHobbyDialogFragment();
+            Bundle args = new Bundle();
+            args.putInt("usuarioId", usuarioId);
+            addHobbyDialog.setArguments(args);
+            addHobbyDialog.show(getFragmentManager(), "AddHobbyDialog");
         });
 
         return view;
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Volver a cargar los hobbies al reanudarse el fragmento
+        cargarHobbies();
+    }
+
+    public void cargarHobbies() {
+        // Obtener los hobbies del usuario usando la columna "imagen" en lugar de "foto"
+        Cursor cursor = dbConexion.selectHobbiesDeUsuario(db, usuarioId);
+        ArrayList<Hobbie> hobbiesList = new ArrayList<>();
+
+        // Opcional: imprimir las columnas del cursor para depurar
+        String[] columnNames = cursor.getColumnNames();
+        for (String columnName : columnNames) {
+            Log.d("HobbiesFragment", "Columna: " + columnName);
+        }
+
+        while (cursor.moveToNext()) {
+            String nombre = cursor.getString(cursor.getColumnIndex("nombre"));
+            String imagen = cursor.getString(cursor.getColumnIndex("imagen"));
+            hobbiesList.add(new Hobbie(nombre, imagen));
+        }
+        cursor.close();
+
+        // Actualizar el adaptador del RecyclerView
+        if (controladorRecyclerView == null) {
+            controladorRecyclerView = new ControladorRecyclerView(hobbiesList);
+            recyclerViewHobbies.setAdapter(controladorRecyclerView);
+        } else {
+            controladorRecyclerView.setHobbyList(hobbiesList);
+            controladorRecyclerView.notifyDataSetChanged();
+        }
+    }
+
+    @Override
     public void onDestroyView() {
-        db.close();
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
         super.onDestroyView();
     }
 }

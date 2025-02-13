@@ -5,8 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
-import com.example.myapplication.Hobby;
+import com.example.myapplication.Hobbie;
 import com.example.myapplication.Usuario;
 
 public class DBConexion extends SQLiteOpenHelper {
@@ -90,10 +89,10 @@ public class DBConexion extends SQLiteOpenHelper {
     }
 
     // Insertar hobby
-    public long insertarHobby(SQLiteDatabase db, Hobby hobby) {
+    public long insertarHobby(SQLiteDatabase db, Hobbie hobby) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NOMBRE_HOBBY, hobby.getNombre());
-        values.put(COLUMN_IMAGEN_HOBBY, hobby.getImagen());
+        values.put(COLUMN_IMAGEN_HOBBY, hobby.getFoto());
         return db.insert(TABLE_HOBBYS, null, values);
     }
 
@@ -105,7 +104,6 @@ public class DBConexion extends SQLiteOpenHelper {
         db.insert(TABLE_USUARIO_HOBBIES, null, values);
     }
 
-
     // Obtener todos los hobbies
     public Cursor selectHobbies(SQLiteDatabase db) {
         return db.rawQuery("SELECT * FROM " + TABLE_HOBBYS, null);
@@ -113,12 +111,10 @@ public class DBConexion extends SQLiteOpenHelper {
 
     // Obtener hobbies de un usuario
     public Cursor selectHobbiesDeUsuario(SQLiteDatabase db, int usuarioId) {
-        return db.rawQuery(
-                "SELECT h.id AS _id, h.nombre, h.imagen FROM " + TABLE_HOBBYS + " h " +
-                        "INNER JOIN " + TABLE_USUARIO_HOBBIES + " uh ON h." + COLUMN_ID + " = uh." + COLUMN_HOBBY_ID +
-                        " WHERE uh." + COLUMN_USUARIO_ID + " = ?",
-                new String[]{String.valueOf(usuarioId)}
-        );
+        String query = "SELECT h." + COLUMN_NOMBRE_HOBBY + ", h." + COLUMN_IMAGEN_HOBBY +
+                " FROM " + TABLE_HOBBYS + " h " +
+                "INNER JOIN " + TABLE_USUARIO_HOBBIES + " uh ON h." + COLUMN_ID + " = uh." + COLUMN_HOBBY_ID +
+                " WHERE uh." + COLUMN_USUARIO_ID + " = ?";
+        return db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
     }
-
 }

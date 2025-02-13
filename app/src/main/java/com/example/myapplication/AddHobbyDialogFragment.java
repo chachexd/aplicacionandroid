@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -16,7 +17,7 @@ import android.widget.ImageView;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.myapplication.DB.DBConexion;
-import com.example.myapplication.Hobby;
+import com.example.myapplication.Hobbie;
 import com.example.myapplication.R;
 
 public class AddHobbyDialogFragment extends DialogFragment {
@@ -28,7 +29,9 @@ public class AddHobbyDialogFragment extends DialogFragment {
     private DBConexion dbConexion;
     private SQLiteDatabase db;
     private Uri imageUri;  // URI de la imagen seleccionada
+    private int usuarioId; // ID del usuario que está añadiendo el hobby
 
+    @SuppressLint("DialogFragmentCallbacksDetector")
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -40,6 +43,11 @@ public class AddHobbyDialogFragment extends DialogFragment {
 
         dbConexion = new DBConexion(getActivity());
         db = dbConexion.getWritableDatabase();
+
+        // Obtener el usuarioId pasado desde el fragmento
+        if (getArguments() != null) {
+            usuarioId = getArguments().getInt("usuarioId");
+        }
 
         // Configurar el botón de añadir imagen
         ivImagen.setOnClickListener(new View.OnClickListener() {
@@ -58,14 +66,35 @@ public class AddHobbyDialogFragment extends DialogFragment {
                     public void onClick(DialogInterface dialog, int which) {
                         String nombre = etNombre.getText().toString();
                         String imagen = imageUri != null ? imageUri.toString() : ""; // Convertir la URI a string
-                        Hobby hobby = new Hobby(nombre, imagen);
-                        dbConexion.insertarHobby(db, hobby);
+                        Hobbie hobby = new Hobbie(nombre, imagen);
+
+                        // Insertar hobby en la tabla hobbies
+                        long hobbyId = dbConexion.insertarHobby(db, hobby);
+
+                        // Asociar el hobby al usuario en la tabla usuario_hobbies
+                        dbConexion.añadirHobbyAUsuario(db, usuarioId, (int) hobbyId);
+
+                        // Recargar los hobbies al añadir uno nuevo
+                        HobbiesFragment hobbiesFragment = (HobbiesFragment) getParentFragment();
+                        if (hobbiesFragment != null) {
+                            hobbiesFragment.cargarHobbies(); // Llamar a la función para actualizar la lista
+                        }
                     }
                 })
                 .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
+                    }
+                })
+                .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        // Recargar los hobbies al cerrar el diálogo
+                        HobbiesFragment hobbiesFragment = (HobbiesFragment) getParentFragment();
+                        if (hobbiesFragment != null) {
+                            hobbiesFragment.cargarHobbies(); // Llamar a la función para actualizar la lista
+                        }
                     }
                 });
 

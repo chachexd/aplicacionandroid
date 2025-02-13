@@ -1,13 +1,14 @@
 package com.example.myapplication;
 
-public class Hobby {
+public class Hobbie {
+
     private String nombre;
-    private String imagen; // Puede ser una URI o una ruta de archivo
+    private String foto;
 
     // Constructor
-    public Hobby(String nombre, String imagen) {
+    public Hobbie(String nombre, String foto) {
         this.nombre = nombre;
-        this.imagen = imagen;
+        this.foto = foto;
     }
 
     // Getters y Setters
@@ -19,11 +20,11 @@ public class Hobby {
         this.nombre = nombre;
     }
 
-    public String getImagen() {
-        return imagen;
+    public String getFoto() {
+        return foto;
     }
 
-    public void setImagen(String imagen) {
-        this.imagen = imagen;
+    public void setFoto(String foto) {
+        this.foto = foto;
     }
 }

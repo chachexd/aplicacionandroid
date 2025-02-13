@@ -3,23 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:padding="16dp">
 
+    <!-- Imagen del hobby -->
     <ImageView
-        android:id="@+id/ivImagen"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        android:scaleType="centerCrop"
+        android:id="@+id/hobby_imagen"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginEnd="16dp"
         android:src="@drawable/ic_launcher_foreground" />
 
+    <!-- Nombre del hobby -->
     <TextView
-        android:id="@+id/tvNombre"
-        android:layout_width="0dp"
+        android:id="@+id/hobby_nombre"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:text="Nombre del Hobby"
         android:textSize="18sp"
-        android:layout_marginStart="16dp"
         android:gravity="center_vertical" />
 
 </LinearLayout>
