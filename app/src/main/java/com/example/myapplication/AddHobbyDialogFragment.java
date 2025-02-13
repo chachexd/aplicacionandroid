@@ -21,13 +21,13 @@ import com.example.myapplication.R;
 
 public class AddHobbyDialogFragment extends DialogFragment {
 
-    private static final int PICK_IMAGE = 1;
+    private static final int PICK_IMAGE_REQUEST = 1;  // Código para el selector de imágenes
 
     private EditText etNombre;
     private ImageView ivImagen;
     private DBConexion dbConexion;
     private SQLiteDatabase db;
-    private Uri imageUri;
+    private Uri imageUri;  // URI de la imagen seleccionada
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -41,13 +41,13 @@ public class AddHobbyDialogFragment extends DialogFragment {
         dbConexion = new DBConexion(getActivity());
         db = dbConexion.getWritableDatabase();
 
-        // Configurar el ImageView para seleccionar una imagen
+        // Configurar el botón de añadir imagen
         ivImagen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Iniciar la selección de imagen desde la galería
+                // Abrir el selector de imágenes
                 Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(intent, PICK_IMAGE);
+                startActivityForResult(intent, PICK_IMAGE_REQUEST);
             }
         });
 
@@ -57,12 +57,9 @@ public class AddHobbyDialogFragment extends DialogFragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String nombre = etNombre.getText().toString();
-                        if (!nombre.isEmpty()) {
-                            // Guardar el hobby en la base de datos, incluyendo la URI de la imagen
-                            String imagen = imageUri != null ? imageUri.toString() : ""; // Usar la URI de la imagen
-                            Hobby hobby = new Hobby(nombre, imagen);
-                            dbConexion.insertarHobby(db, hobby);
-                        }
+                        String imagen = imageUri != null ? imageUri.toString() : ""; // Convertir la URI a string
+                        Hobby hobby = new Hobby(nombre, imagen);
+                        dbConexion.insertarHobby(db, hobby);
                     }
                 })
                 .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
@@ -75,14 +72,16 @@ public class AddHobbyDialogFragment extends DialogFragment {
         return builder.create();
     }
 
-    // Obtener la imagen seleccionada
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode == getActivity().RESULT_OK && requestCode == PICK_IMAGE) {
-            imageUri = data.getData(); // Obtener la URI de la imagen seleccionada
-            ivImagen.setImageURI(imageUri); // Mostrar la imagen en el ImageView
+        if (resultCode == getActivity().RESULT_OK && requestCode == PICK_IMAGE_REQUEST) {
+            // Obtener la URI de la imagen seleccionada
+            if (data != null && data.getData() != null) {
+                imageUri = data.getData();
+                ivImagen.setImageURI(imageUri);  // Mostrar la imagen seleccionada en el ImageView
+            }
         }
     }
 

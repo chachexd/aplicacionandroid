@@ -43,11 +43,20 @@ public class HobbiesFragment extends Fragment {
         hobbyAdapter = new HobbyAdapter(getActivity(), cursor);
         listViewHobbies.setAdapter(hobbyAdapter);
 
+        // Acción al pulsar el botón "Añadir Hobby"
         btnAddHobby.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Lógica para añadir un nuevo hobby
-                // Asegúrate de asociar el hobby al usuario actual
+                // Crear un nuevo fragmento de diálogo para añadir hobby
+                AddHobbyDialogFragment addHobbyDialog = new AddHobbyDialogFragment();
+
+                // Pasar el usuarioId al diálogo
+                Bundle args = new Bundle();
+                args.putInt("usuarioId", usuarioId); // pasamos el usuarioId
+                addHobbyDialog.setArguments(args);
+
+                // Mostrar el diálogo
+                addHobbyDialog.show(getFragmentManager(), "AddHobbyDialog");
             }
         });
 
