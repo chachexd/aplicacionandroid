@@ -28,8 +28,8 @@ public class HobbyAdapter extends CursorAdapter {
         TextView tvNombre = view.findViewById(R.id.tvNombre);
         ImageView ivImagen = view.findViewById(R.id.ivImagen);
 
-        @SuppressLint("Range") String nombre = cursor.getString(cursor.getColumnIndex("nombre"));
-        @SuppressLint("Range") String imagen = cursor.getString(cursor.getColumnIndex("imagen"));
+        String nombre = cursor.getString(cursor.getColumnIndex("nombre"));
+        String imagen = cursor.getString(cursor.getColumnIndex("imagen"));
 
         tvNombre.setText(nombre);
         // Cargar la imagen desde el almacenamiento local

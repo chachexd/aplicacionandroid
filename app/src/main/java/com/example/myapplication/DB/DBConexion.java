@@ -105,6 +105,7 @@ public class DBConexion extends SQLiteOpenHelper {
         db.insert(TABLE_USUARIO_HOBBIES, null, values);
     }
 
+
     // Obtener todos los hobbies
     public Cursor selectHobbies(SQLiteDatabase db) {
         return db.rawQuery("SELECT * FROM " + TABLE_HOBBYS, null);
@@ -119,4 +120,5 @@ public class DBConexion extends SQLiteOpenHelper {
                 new String[]{String.valueOf(usuarioId)}
         );
     }
+
 }
