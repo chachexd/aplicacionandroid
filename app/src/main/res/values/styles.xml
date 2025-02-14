@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="BlueButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">18sp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:background">#008FF5</item>
+        <item name="rippleColor">@android:color/transparent</item>
+        <item name="android:minHeight">56dp</item>
+    </style>
+
+
+
+</resources>

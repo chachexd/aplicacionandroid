@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-
 android {
     namespace = "com.example.myapplication"
     compileSdk = 35
@@ -42,13 +41,21 @@ android {
 }
 
 dependencies {
+    // Material Components usando libs
+    implementation("com.google.android.material:material:1.9.0")
+
+    // Core de AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+
+    // Material 3 para UI moderna
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -62,7 +69,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // Glide para cargar imágenes
+    // Glide para cargar imágenes de forma optimizada
     implementation("com.github.bumptech.glide:glide:4.15.1")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1") // Reemplazo de kapt
 }

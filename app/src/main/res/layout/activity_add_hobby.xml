@@ -1,30 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="24dp"
     android:gravity="center"
-    android:background="#232425">
+    android:background="#1A1F2B">
 
     <EditText
         android:id="@+id/etNombre"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Nombre del hobby"
-        android:inputType="text"
-        android:textColor="#FFFFFF"
-        android:textColorHint="#B0B0B0"
-        android:backgroundTint="#FFFFFF" />
+        android:textColor="#E5E9F0"
+        android:textColorHint="#AEB4C0"
+        android:padding="14dp" />
 
     <ImageView
         android:id="@+id/ivImagen"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_marginTop="16dp"
-        android:src="@drawable/ic_launcher_foreground"
         android:scaleType="centerCrop"
-        android:background="@android:color/darker_gray"
+        android:background="@drawable/ic_launcher_foreground"
         android:contentDescription="Seleccionar imagen" />
 
     <Button
@@ -32,8 +30,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Guardar Hobby"
-        android:layout_marginTop="16dp"
-        android:textColor="#232425"
-        android:backgroundTint="#FFFFFF" />
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#008FF5"
+        android:layout_marginTop="24dp"/>
+
 
 </LinearLayout>
