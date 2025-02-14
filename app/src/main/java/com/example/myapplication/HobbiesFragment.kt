@@ -1,102 +1,146 @@
-package com.example.myapplication;
+package com.example.myapplication
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.os.Bundle;
-import android.util.Log;  // Para los logs
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
+import android.content.Intent
+import android.database.sqlite.SQLiteDatabase
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.os.Bundle
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.DB.DBConexion
 
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+class HobbiesFragment(private val usuarioId: Int) : Fragment() {
 
-import com.example.myapplication.DB.DBConexion;
+    private lateinit var recyclerViewHobbies: RecyclerView
+    private lateinit var btnAddHobby: Button
+    private lateinit var dbConexion: DBConexion
+    private lateinit var db: SQLiteDatabase
+    private lateinit var controladorRecyclerView: ControladorRecyclerView
+    private var hobbiesList = ArrayList<Hobbie>()
 
-import java.util.ArrayList;
-
-public class HobbiesFragment extends Fragment {
-
-    private RecyclerView recyclerViewHobbies;
-    private Button btnAddHobby;
-    private DBConexion dbConexion;
-    private SQLiteDatabase db;
-    private ControladorRecyclerView controladorRecyclerView;
-    private int usuarioId;
-
-    public HobbiesFragment(int usuarioId) {
-        this.usuarioId = usuarioId;
+    private val addHobbyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        cargarHobbies()
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_hobbies, container, false);
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        val view = inflater.inflate(R.layout.fragment_hobbies, container, false)
 
-        recyclerViewHobbies = view.findViewById(R.id.recyclerViewHobbies);
-        btnAddHobby = view.findViewById(R.id.btnAddHobby);
+        recyclerViewHobbies = view.findViewById(R.id.recyclerViewHobbies)
+        btnAddHobby = view.findViewById(R.id.btnAddHobby)
 
-        // Configurar RecyclerView
-        recyclerViewHobbies.setLayoutManager(new LinearLayoutManager(getActivity()));
-        dbConexion = new DBConexion(getActivity());
-        db = dbConexion.getReadableDatabase();
+        recyclerViewHobbies.layoutManager = LinearLayoutManager(activity)
+        dbConexion = DBConexion(requireActivity())
+        db = dbConexion.writableDatabase
 
-        // Cargar los hobbies del usuario
-        cargarHobbies();
+        configurarSwipeParaEliminar()
+        cargarHobbies()
 
-        // Acción al pulsar el botón "Añadir Hobby"
-        btnAddHobby.setOnClickListener(v -> {
-            AddHobbyDialogFragment addHobbyDialog = new AddHobbyDialogFragment();
-            Bundle args = new Bundle();
-            args.putInt("usuarioId", usuarioId);
-            addHobbyDialog.setArguments(args);
-            addHobbyDialog.show(getFragmentManager(), "AddHobbyDialog");
-        });
-
-        return view;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Volver a cargar los hobbies al reanudarse el fragmento
-        cargarHobbies();
-    }
-
-    public void cargarHobbies() {
-        // Obtener los hobbies del usuario usando la columna "imagen" en lugar de "foto"
-        Cursor cursor = dbConexion.selectHobbiesDeUsuario(db, usuarioId);
-        ArrayList<Hobbie> hobbiesList = new ArrayList<>();
-
-        // Opcional: imprimir las columnas del cursor para depurar
-        String[] columnNames = cursor.getColumnNames();
-        for (String columnName : columnNames) {
-            Log.d("HobbiesFragment", "Columna: " + columnName);
+        btnAddHobby.setOnClickListener {
+            val intent = Intent(activity, AddHobbyActivity::class.java)
+            intent.putExtra("usuarioId", usuarioId)
+            addHobbyLauncher.launch(intent)
         }
 
-        while (cursor.moveToNext()) {
-            String nombre = cursor.getString(cursor.getColumnIndex("nombre"));
-            String imagen = cursor.getString(cursor.getColumnIndex("imagen"));
-            hobbiesList.add(new Hobbie(nombre, imagen));
-        }
-        cursor.close();
+        return view
+    }
 
-        // Actualizar el adaptador del RecyclerView
-        if (controladorRecyclerView == null) {
-            controladorRecyclerView = new ControladorRecyclerView(hobbiesList);
-            recyclerViewHobbies.setAdapter(controladorRecyclerView);
+    override fun onResume() {
+        super.onResume()
+        cargarHobbies()
+    }
+
+    private fun cargarHobbies() {
+        hobbiesList.clear()
+        val cursor = dbConexion.selectHobbiesDeUsuario(db, usuarioId)
+
+        cursor?.use {
+            while (it.moveToNext()) {
+                val id = it.getInt(it.getColumnIndexOrThrow("id"))
+                val nombre = it.getString(it.getColumnIndexOrThrow("nombre"))
+                val imagen = it.getString(it.getColumnIndexOrThrow("imagen")) ?: ""
+
+                // Validar que la URI es válida
+                if (imagen.isNotEmpty() && !imagen.startsWith("content://")) {
+                    Log.e("HobbiesFragment", "URI inválida detectada: $imagen")
+                }
+
+                hobbiesList.add(Hobbie(id, nombre, imagen))
+            }
+        }
+
+        actualizarRecyclerView()
+    }
+
+    private fun actualizarRecyclerView() {
+        if (!::controladorRecyclerView.isInitialized) {
+            controladorRecyclerView = ControladorRecyclerView(hobbiesList)
+            recyclerViewHobbies.adapter = controladorRecyclerView
         } else {
-            controladorRecyclerView.setHobbyList(hobbiesList);
-            controladorRecyclerView.notifyDataSetChanged();
+            controladorRecyclerView.setHobbyList(hobbiesList)
+            controladorRecyclerView.notifyDataSetChanged()
         }
     }
 
-    @Override
-    public void onDestroyView() {
-        if (db != null && db.isOpen()) {
-            db.close();
+    private fun configurarSwipeParaEliminar() {
+        val itemTouchHelperCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                if (position < 0 || position >= hobbiesList.size) {
+                    return
+                }
+
+                val hobby = hobbiesList[position]
+
+                // Validar que el hobby tiene un ID antes de intentar eliminarlo
+                if (hobby.id != -1) {
+                    val eliminado = dbConexion.eliminarHobby(db, hobby.id)
+                    if (eliminado) {
+                        hobbiesList.removeAt(position)
+                        controladorRecyclerView.notifyItemRemoved(position)
+                    } else {
+                        controladorRecyclerView.notifyItemChanged(position) // Restaurar en caso de fallo
+                    }
+                }
+            }
+
+            override fun onChildDraw(
+                c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
+                dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean
+            ) {
+                val itemView = viewHolder.itemView
+                val paint = Paint()
+                paint.color = Color.RED
+
+                c.drawRect(
+                    itemView.left.toFloat(),
+                    itemView.top.toFloat(),
+                    itemView.left.toFloat() + dX,
+                    itemView.bottom.toFloat(),
+                    paint
+                )
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
         }
-        super.onDestroyView();
+
+        val itemTouchHelper = ItemTouchHelper(itemTouchHelperCallback)
+        itemTouchHelper.attachToRecyclerView(recyclerViewHobbies)
     }
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center"
+    android:background="#232425">
+
+    <EditText
+        android:id="@+id/etNombre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Nombre del hobby"
+        android:inputType="text"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#B0B0B0"
+        android:backgroundTint="#FFFFFF" />
+
+    <ImageView
+        android:id="@+id/ivImagen"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_launcher_foreground"
+        android:scaleType="centerCrop"
+        android:background="@android:color/darker_gray"
+        android:contentDescription="Seleccionar imagen" />
+
+    <Button
+        android:id="@+id/btnGuardar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Guardar Hobby"
+        android:layout_marginTop="16dp"
+        android:textColor="#232425"
+        android:backgroundTint="#FFFFFF" />
+
+</LinearLayout>

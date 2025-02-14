@@ -7,9 +7,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-
     <application
         android:allowBackup="true"
+        tools:replace="android:allowBackup"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -31,12 +31,21 @@
             </intent-filter>
         </activity>
 
-        <!-- MainActivity ahora no tiene el intent-filter MAIN, ya no se lanzará al inicio -->
+        <!-- MainActivity (pantalla principal después del login) -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication">
+        </activity>
+
+        <!-- Actividad para añadir hobbies -->
+        <activity
+            android:name=".AddHobbyActivity"
+            android:exported="false"
+            android:label="Añadir Hobby"
+            android:theme="@style/Theme.MyApplication"
+            android:parentActivityName=".MainActivity">
         </activity>
 
     </application>

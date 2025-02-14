@@ -1,16 +1,14 @@
 package com.example.myapplication;
 
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
 
 import com.example.myapplication.DB.DBConexion;
-import com.example.myapplication.R;
-import com.example.myapplication.ViewPagerAdapter;
-import com.example.myapplication.HobbiesFragment;
-import com.example.myapplication.ViajesFragment;
 import com.google.android.material.tabs.TabLayout;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,8 +27,20 @@ public class MainActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabLayout);
 
-        // Obtener el ID del usuario actual (puedes pasarlo desde LoginActivity)
-        usuarioId = obtenerIdDelUsuario(); // Método para obtener el ID del usuario
+        // Inicializar la base de datos
+        dbConexion = new DBConexion(this);
+        db = dbConexion.getWritableDatabase();
+
+        // Obtener el ID del usuario actual
+        usuarioId = getIntent().getIntExtra("USUARIO_ID", 0);
+
+        usuarioId = getIntent().getIntExtra("USUARIO_ID", -1);
+        if (usuarioId == -1) {
+            Toast.makeText(this, "Error al obtener usuario. Inicia sesión nuevamente.", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+        }
+
 
         // Configurar el ViewPager
         setupViewPager(viewPager);
@@ -40,27 +50,18 @@ public class MainActivity extends AppCompatActivity {
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
 
-        // Añadir fragments
-        adapter.addFragment(new HobbiesFragment(usuarioId), "Hobbies"); // Pasar el ID del usuario
+        // Añadir fragments solo si el usuario es válido
+        adapter.addFragment(new HobbiesFragment(usuarioId), "Hobbies");
         adapter.addFragment(new ViajesFragment(), "Viajes");
 
         viewPager.setAdapter(adapter);
     }
 
-    // Método de ejemplo para obtener el ID del usuario
-    private int obtenerIdDelUsuario() {
-        // Aquí debes implementar la lógica para obtener el ID del usuario actual
-        // Por ejemplo, puedes pasarlo desde LoginActivity usando un Intent
-        return getIntent().getIntExtra("USUARIO_ID", 0); // Recibe el ID del usuario como parámetro en el intento
-
-        // Este ejemplo devuelve un ID de usuario fijo para probar
-        // Puedes cambiarlo por la lógica adecuada para obtener el ID del usuario actual
-        //return 1; // Este es un valor de ejemplo
-    }
-
     @Override
     protected void onDestroy() {
-        db.close();
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
         super.onDestroy();
     }
 }

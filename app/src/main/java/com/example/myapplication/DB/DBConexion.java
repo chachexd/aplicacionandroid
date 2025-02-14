@@ -5,26 +5,18 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
 import com.example.myapplication.Hobbie;
 import com.example.myapplication.Usuario;
 
 public class DBConexion extends SQLiteOpenHelper {
+    private static final String DATABASE_NAME = "DiegoCuestaDiazDB";
+    private static final int DATABASE_VERSION = 3;
 
-    public static final String DATABASE_NAME = "app_db";
-    public static final int DATABASE_VERSION = 1;
-
-    // Tablas y columnas
-    public static final String TABLE_USUARIOS = "usuarios";
-    public static final String TABLE_HOBBYS = "hobbies";
-    public static final String TABLE_USUARIO_HOBBIES = "usuario_hobbies"; // Nueva tabla intermedia
-
-    public static final String COLUMN_ID = "id";
-    public static final String COLUMN_USUARIO = "usuario";
-    public static final String COLUMN_CONTRASENA = "contrasena";
-    public static final String COLUMN_NOMBRE_HOBBY = "nombre";
-    public static final String COLUMN_IMAGEN_HOBBY = "imagen";
-    public static final String COLUMN_USUARIO_ID = "usuario_id";
-    public static final String COLUMN_HOBBY_ID = "hobby_id";
+    private static final String TABLE_USUARIOS = "usuarios";
+    private static final String TABLE_HOBBIES = "hobbies";
+    private static final String TABLE_USUARIOS_HOBBIES = "usuarios_hobbies";
 
     public DBConexion(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -32,89 +24,92 @@ public class DBConexion extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Crear tabla de usuarios
-        String CREATE_TABLE_USUARIOS = "CREATE TABLE " + TABLE_USUARIOS + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + COLUMN_USUARIO + " TEXT, "
-                + COLUMN_CONTRASENA + " TEXT"
-                + ")";
-        db.execSQL(CREATE_TABLE_USUARIOS);
-
-        // Crear tabla de hobbies
-        String CREATE_TABLE_HOBBYS = "CREATE TABLE " + TABLE_HOBBYS + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + COLUMN_NOMBRE_HOBBY + " TEXT, "
-                + COLUMN_IMAGEN_HOBBY + " TEXT"
-                + ")";
-        db.execSQL(CREATE_TABLE_HOBBYS);
-
-        // Crear tabla intermedia usuario_hobbies
-        String CREATE_TABLE_USUARIO_HOBBIES = "CREATE TABLE " + TABLE_USUARIO_HOBBIES + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + COLUMN_USUARIO_ID + " INTEGER, "
-                + COLUMN_HOBBY_ID + " INTEGER, "
-                + "FOREIGN KEY(" + COLUMN_USUARIO_ID + ") REFERENCES " + TABLE_USUARIOS + "(" + COLUMN_ID + "), "
-                + "FOREIGN KEY(" + COLUMN_HOBBY_ID + ") REFERENCES " + TABLE_HOBBYS + "(" + COLUMN_ID + ")"
-                + ")";
-        db.execSQL(CREATE_TABLE_USUARIO_HOBBIES);
+        db.execSQL("CREATE TABLE " + TABLE_USUARIOS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, usuario TEXT NOT NULL UNIQUE, password TEXT NOT NULL)");
+        db.execSQL("CREATE TABLE " + TABLE_HOBBIES + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, imagen TEXT)");
+        db.execSQL("CREATE TABLE " + TABLE_USUARIOS_HOBBIES + " (usuario_id INTEGER, hobby_id INTEGER, PRIMARY KEY(usuario_id, hobby_id), FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE, FOREIGN KEY(hobby_id) REFERENCES hobbies(id) ON DELETE CASCADE)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USUARIO_HOBBIES);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USUARIOS);
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_HOBBYS);
-        onCreate(db);
-    }
-
-    // Insertar usuario
-    public void insertarUsuario(SQLiteDatabase db, Usuario usuario) {
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_USUARIO, usuario.getNombre());
-        values.put(COLUMN_CONTRASENA, usuario.getContrasena());
-        db.insert(TABLE_USUARIOS, null, values);
-    }
-
-    // Verificar usuario
-    public boolean verificarUsuario(SQLiteDatabase db, Usuario usuario) {
-        Cursor cursor = db.query(TABLE_USUARIOS, new String[]{COLUMN_ID, COLUMN_USUARIO, COLUMN_CONTRASENA},
-                COLUMN_USUARIO + "=? AND " + COLUMN_CONTRASENA + "=?", new String[]{usuario.getNombre(), usuario.getContrasena()},
-                null, null, null);
-
-        boolean isValid = cursor != null && cursor.getCount() > 0;
-        if (cursor != null) {
-            cursor.close();
+        if (oldVersion < 3) {
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_HOBBIES);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USUARIOS_HOBBIES);
+            db.execSQL("CREATE TABLE " + TABLE_HOBBIES + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, imagen TEXT)");
+            db.execSQL("CREATE TABLE " + TABLE_USUARIOS_HOBBIES + " (usuario_id INTEGER, hobby_id INTEGER, PRIMARY KEY(usuario_id, hobby_id), FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE, FOREIGN KEY(hobby_id) REFERENCES hobbies(id) ON DELETE CASCADE)");
         }
-        return isValid;
     }
 
-    // Insertar hobby
+    public boolean insertarUsuario(SQLiteDatabase db, Usuario usuario) {
+        ContentValues values = new ContentValues();
+        values.put("usuario", usuario.getNombre());
+        values.put("password", usuario.getPassword());
+
+        long resultado = db.insertWithOnConflict(TABLE_USUARIOS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        return resultado != -1;
+    }
+
     public long insertarHobby(SQLiteDatabase db, Hobbie hobby) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_NOMBRE_HOBBY, hobby.getNombre());
-        values.put(COLUMN_IMAGEN_HOBBY, hobby.getFoto());
-        return db.insert(TABLE_HOBBYS, null, values);
+        values.put("nombre", hobby.getNombre());
+        values.put("imagen", hobby.getFoto());
+
+        long hobbyId = db.insert(TABLE_HOBBIES, null, values);
+        if (hobbyId == -1) {
+            Log.e("DBConexion", "Error al insertar el hobby en la base de datos.");
+        }
+        return hobbyId;
     }
 
-    // Asociar un hobby a un usuario
-    public void añadirHobbyAUsuario(SQLiteDatabase db, int usuarioId, int hobbyId) {
+    public boolean añadirHobbyAUsuario(SQLiteDatabase db, int usuarioId, long hobbyId) {
         ContentValues values = new ContentValues();
-        values.put(COLUMN_USUARIO_ID, usuarioId);
-        values.put(COLUMN_HOBBY_ID, hobbyId);
-        db.insert(TABLE_USUARIO_HOBBIES, null, values);
+        values.put("usuario_id", usuarioId);
+        values.put("hobby_id", hobbyId);
+
+        long resultado = db.insert(TABLE_USUARIOS_HOBBIES, null, values);
+        return resultado != -1;
     }
 
-    // Obtener todos los hobbies
-    public Cursor selectHobbies(SQLiteDatabase db) {
-        return db.rawQuery("SELECT * FROM " + TABLE_HOBBYS, null);
-    }
-
-    // Obtener hobbies de un usuario
     public Cursor selectHobbiesDeUsuario(SQLiteDatabase db, int usuarioId) {
-        String query = "SELECT h." + COLUMN_NOMBRE_HOBBY + ", h." + COLUMN_IMAGEN_HOBBY +
-                " FROM " + TABLE_HOBBYS + " h " +
-                "INNER JOIN " + TABLE_USUARIO_HOBBIES + " uh ON h." + COLUMN_ID + " = uh." + COLUMN_HOBBY_ID +
-                " WHERE uh." + COLUMN_USUARIO_ID + " = ?";
-        return db.rawQuery(query, new String[]{String.valueOf(usuarioId)});
+        return db.rawQuery("SELECT h.id, h.nombre, h.imagen FROM " + TABLE_HOBBIES + " h " +
+                "INNER JOIN " + TABLE_USUARIOS_HOBBIES + " uh ON h.id = uh.hobby_id " +
+                "WHERE uh.usuario_id = ?", new String[]{String.valueOf(usuarioId)});
+    }
+
+    public boolean eliminarHobby(SQLiteDatabase db, int hobbyId) {
+        // Eliminar primero de la tabla relacional
+        db.delete(TABLE_USUARIOS_HOBBIES, "hobby_id = ?", new String[]{String.valueOf(hobbyId)});
+
+        // Luego eliminar el hobby de la tabla principal
+        int filasEliminadas = db.delete(TABLE_HOBBIES, "id = ?", new String[]{String.valueOf(hobbyId)});
+
+        return filasEliminadas > 0;
+    }
+
+    public String obtenerPasswordUsuario(SQLiteDatabase db, String usuario) {
+        String password = null;
+        Cursor cursor = db.rawQuery("SELECT password FROM " + TABLE_USUARIOS + " WHERE usuario = ?", new String[]{usuario});
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                password = cursor.getString(0);
+            }
+            cursor.close();
+        }
+
+        return password;
+    }
+
+    public int obtenerIdUsuario(SQLiteDatabase db, String usuario) {
+        int id = -1;
+        Cursor cursor = db.rawQuery("SELECT id FROM " + TABLE_USUARIOS + " WHERE usuario = ?", new String[]{usuario});
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                id = cursor.getInt(0);
+            }
+            cursor.close();
+        }
+
+        return id;
     }
 }

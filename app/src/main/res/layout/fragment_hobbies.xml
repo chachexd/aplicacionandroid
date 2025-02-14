@@ -5,19 +5,15 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Botón para añadir hobby -->
     <Button
         android:id="@+id/btnAddHobby"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Añadir Hobby"
-        android:layout_marginBottom="16dp" />
+        android:text="Añadir Hobby" />
 
-    <!-- RecyclerView para mostrar los hobbies -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewHobbies"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" /> <!-- Ocupa el espacio restante -->
-
+        android:layout_height="match_parent"
+        android:layout_marginTop="16dp"/>
 </LinearLayout>

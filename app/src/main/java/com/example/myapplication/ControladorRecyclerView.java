@@ -10,6 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 
@@ -23,12 +26,12 @@ public class ControladorRecyclerView extends RecyclerView.Adapter<ControladorRec
 
     public void setHobbyList(ArrayList<Hobbie> hobbyList) {
         this.hobbyList = hobbyList;
-        notifyDataSetChanged();
+        notifyDataSetChanged(); // Notificar cambios en el adaptador
     }
 
-    public void addHobbie(Hobbie hobbie) {
-        hobbyList.add(hobbie);
-        notifyItemInserted(hobbyList.size() - 1);
+    public void removeHobby(int position) {
+        hobbyList.remove(position);
+        notifyItemRemoved(position);
     }
 
     @Override
@@ -42,25 +45,30 @@ public class ControladorRecyclerView extends RecyclerView.Adapter<ControladorRec
         Hobbie hobbie = hobbyList.get(position);
         holder.nombre.setText(hobbie.getNombre());
 
-        // Cargar la imagen desde el URI de contenido
-        String imagePath = hobbie.getFoto(); // Se asume que getFoto() devuelve un URI (String)
+        String imagePath = hobbie.getFoto();
         if (imagePath != null && !imagePath.isEmpty()) {
             try {
                 Context context = holder.imagen.getContext();
-                Uri imageUri = Uri.parse(imagePath);
-                InputStream inputStream = context.getContentResolver().openInputStream(imageUri);
-                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                holder.imagen.setImageBitmap(bitmap);
+                if (imagePath != null && !imagePath.isEmpty() && imagePath.startsWith("content://")) {
+                    Uri imageUri = Uri.parse(imagePath);
+                    Glide.with(context)
+                            .load(imageUri)
+                            .placeholder(R.drawable.ic_launcher_foreground)
+                            .error(R.drawable.ic_launcher_foreground)
+                            .into(holder.imagen);
+                } else {
+                    holder.imagen.setImageResource(R.drawable.ic_launcher_foreground);
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
-                // En caso de error, puedes poner una imagen por defecto
                 holder.imagen.setImageResource(R.drawable.ic_launcher_foreground);
             }
         } else {
-            // Si no hay ruta de imagen, se asigna una imagen por defecto
             holder.imagen.setImageResource(R.drawable.ic_launcher_foreground);
         }
     }
+
 
     @Override
     public int getItemCount() {

@@ -1,17 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:gravity="center">
+    android:gravity="center"
+    android:background="#232425">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="142dp"
+        app:srcCompat="@drawable/imagen_sky_scanner" />
 
     <EditText
         android:id="@+id/etUsuario"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Usuario"
-        android:inputType="text" />
+        android:inputType="text"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#B0B0B0"
+        android:backgroundTint="#FFFFFF" />
 
     <EditText
         android:id="@+id/etContrasena"
@@ -19,20 +30,27 @@
         android:layout_height="wrap_content"
         android:hint="Contraseña"
         android:inputType="textPassword"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#B0B0B0"
+        android:backgroundTint="#FFFFFF" />
 
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Iniciar Sesión"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="24dp"
+        android:textColor="#232425"
+        android:backgroundTint="#FFFFFF" />
 
     <Button
         android:id="@+id/btnRegistrar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Registrar"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="16dp"
+        android:textColor="#232425"
+        android:backgroundTint="#FFFFFF" />
 
 </LinearLayout>
