@@ -12,7 +12,7 @@ import com.example.myapplication.Usuario;
 
 public class DBConexion extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "DiegoCuestaDiazDB";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 5;
 
     private static final String TABLE_USUARIOS = "usuarios";
     private static final String TABLE_HOBBIES = "hobbies";
@@ -25,17 +25,18 @@ public class DBConexion extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + TABLE_USUARIOS + " (id INTEGER PRIMARY KEY AUTOINCREMENT, usuario TEXT NOT NULL UNIQUE, password TEXT NOT NULL)");
-        db.execSQL("CREATE TABLE " + TABLE_HOBBIES + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, imagen TEXT)");
+        db.execSQL("CREATE TABLE " + TABLE_HOBBIES + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, descripcion TEXT, imagen TEXT)");
         db.execSQL("CREATE TABLE " + TABLE_USUARIOS_HOBBIES + " (usuario_id INTEGER, hobby_id INTEGER, PRIMARY KEY(usuario_id, hobby_id), FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE, FOREIGN KEY(hobby_id) REFERENCES hobbies(id) ON DELETE CASCADE)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 3) {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_HOBBIES);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_USUARIOS_HOBBIES);
-            db.execSQL("CREATE TABLE " + TABLE_HOBBIES + " (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT NOT NULL, imagen TEXT)");
-            db.execSQL("CREATE TABLE " + TABLE_USUARIOS_HOBBIES + " (usuario_id INTEGER, hobby_id INTEGER, PRIMARY KEY(usuario_id, hobby_id), FOREIGN KEY(usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE, FOREIGN KEY(hobby_id) REFERENCES hobbies(id) ON DELETE CASCADE)");
+        if (oldVersion < 5) {
+            try {
+                db.execSQL("ALTER TABLE " + TABLE_HOBBIES + " ADD COLUMN descripcion TEXT");
+            } catch (Exception e) {
+                Log.e("DBUpgrade", "Error al añadir la columna descripcion: " + e.getMessage());
+            }
         }
     }
 
@@ -51,6 +52,7 @@ public class DBConexion extends SQLiteOpenHelper {
     public long insertarHobby(SQLiteDatabase db, Hobbie hobby) {
         ContentValues values = new ContentValues();
         values.put("nombre", hobby.getNombre());
+        values.put("descripcion", hobby.getDescripcion()); // Asegurar que la descripción se almacene
         values.put("imagen", hobby.getFoto());
 
         long hobbyId = db.insert(TABLE_HOBBIES, null, values);
@@ -70,18 +72,14 @@ public class DBConexion extends SQLiteOpenHelper {
     }
 
     public Cursor selectHobbiesDeUsuario(SQLiteDatabase db, int usuarioId) {
-        return db.rawQuery("SELECT h.id, h.nombre, h.imagen FROM " + TABLE_HOBBIES + " h " +
+        return db.rawQuery("SELECT h.id, h.nombre, h.descripcion, h.imagen FROM " + TABLE_HOBBIES + " h " +
                 "INNER JOIN " + TABLE_USUARIOS_HOBBIES + " uh ON h.id = uh.hobby_id " +
                 "WHERE uh.usuario_id = ?", new String[]{String.valueOf(usuarioId)});
     }
 
     public boolean eliminarHobby(SQLiteDatabase db, int hobbyId) {
-        // Eliminar primero de la tabla relacional
         db.delete(TABLE_USUARIOS_HOBBIES, "hobby_id = ?", new String[]{String.valueOf(hobbyId)});
-
-        // Luego eliminar el hobby de la tabla principal
         int filasEliminadas = db.delete(TABLE_HOBBIES, "id = ?", new String[]{String.valueOf(hobbyId)});
-
         return filasEliminadas > 0;
     }
 
@@ -95,7 +93,6 @@ public class DBConexion extends SQLiteOpenHelper {
             }
             cursor.close();
         }
-
         return password;
     }
 
@@ -109,7 +106,6 @@ public class DBConexion extends SQLiteOpenHelper {
             }
             cursor.close();
         }
-
         return id;
     }
 }

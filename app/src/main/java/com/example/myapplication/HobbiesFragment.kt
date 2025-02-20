@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.app.Activity
 import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.Canvas
@@ -27,9 +28,12 @@ class HobbiesFragment(private val usuarioId: Int) : Fragment() {
     private lateinit var controladorRecyclerView: ControladorRecyclerView
     private var hobbiesList = ArrayList<Hobbie>()
 
-    private val addHobbyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        cargarHobbies()
+    private val addHobbyLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            cargarHobbies() // Asegura que la lista se actualiza solo si se agregó correctamente
+        }
     }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_hobbies, container, false)
@@ -66,6 +70,7 @@ class HobbiesFragment(private val usuarioId: Int) : Fragment() {
             while (it.moveToNext()) {
                 val id = it.getInt(it.getColumnIndexOrThrow("id"))
                 val nombre = it.getString(it.getColumnIndexOrThrow("nombre"))
+                val descripcion = it.getString(it.getColumnIndexOrThrow("descripcion")) ?: "" // Asegurar que no sea null
                 val imagen = it.getString(it.getColumnIndexOrThrow("imagen")) ?: ""
 
                 // Validar que la URI es válida
@@ -73,7 +78,8 @@ class HobbiesFragment(private val usuarioId: Int) : Fragment() {
                     Log.e("HobbiesFragment", "URI inválida detectada: $imagen")
                 }
 
-                hobbiesList.add(Hobbie(id, nombre, imagen))
+                // Ahora se incluyen todos los parámetros en el objeto Hobbie
+                hobbiesList.add(Hobbie(id, nombre, descripcion, imagen))
             }
         }
 

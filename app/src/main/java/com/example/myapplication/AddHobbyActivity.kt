@@ -16,6 +16,7 @@ import com.example.myapplication.DB.DBConexion
 class AddHobbyActivity : AppCompatActivity() {
 
     private lateinit var etNombre: EditText
+    private lateinit var etDescripcion: EditText
     private lateinit var ivImagen: ImageView
     private lateinit var btnGuardar: Button
     private lateinit var dbConexion: DBConexion
@@ -23,10 +24,10 @@ class AddHobbyActivity : AppCompatActivity() {
     private var usuarioId: Int = -1
     private var imageUri: Uri? = null
 
-    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) {
-            imageUri = uri
-            ivImagen.setImageURI(uri) // Mostrar la imagen seleccionada
+    private val selectImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            imageUri = it
+            ivImagen.setImageURI(it) // Muestra la imagen seleccionada
         }
     }
 
@@ -35,6 +36,7 @@ class AddHobbyActivity : AppCompatActivity() {
         setContentView(R.layout.activity_add_hobby)
 
         etNombre = findViewById(R.id.etNombre)
+        etDescripcion = findViewById(R.id.etDescripcion)
         ivImagen = findViewById(R.id.ivImagen)
         btnGuardar = findViewById(R.id.btnGuardar)
 
@@ -43,35 +45,36 @@ class AddHobbyActivity : AppCompatActivity() {
 
         usuarioId = intent.getIntExtra("usuarioId", -1)
 
+        // Seleccionar imagen al hacer clic en la imagen
         ivImagen.setOnClickListener {
-            pickImageLauncher.launch("image/*") // Abrir la galería
+            selectImageLauncher.launch("image/*")
         }
-
         btnGuardar.setOnClickListener {
             val nombre = etNombre.text.toString().trim()
+            val descripcion = etDescripcion.text.toString().trim()
+            val imagenString = imageUri?.toString() ?: ""
 
             if (nombre.isNotEmpty()) {
-                val imagenString = imageUri?.toString() ?: "" // Convertir la URI a String
-
-                val nuevoHobby = Hobbie(0, nombre, imagenString) // Guardar la URI en la base de datos
-                val hobbyId = dbConexion.insertarHobby(db, nuevoHobby)
+                val nuevoHobby = Hobbie(0, nombre, descripcion, imagenString)
+                val hobbyId = dbConexion.insertarHobby(db, nuevoHobby) // Inserta el hobby y obtiene su ID
 
                 if (hobbyId != -1L) {
-                    val resultado = dbConexion.añadirHobbyAUsuario(db, usuarioId,
-                        hobbyId.toInt().toLong()
-                    )
-                    if (resultado) {
-                        Toast.makeText(this, "Hobby añadido correctamente", Toast.LENGTH_SHORT).show()
+                    val agregado = dbConexion.añadirHobbyAUsuario(db, usuarioId, hobbyId) // Vincula el hobby al usuario
+
+                    if (agregado) {
+                        setResult(Activity.RESULT_OK)
                         finish()
                     } else {
-                        Toast.makeText(this, "Error al asociar hobby con usuario", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Error al vincular el hobby con el usuario", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(this, "Error al añadir hobby", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error al guardar el hobby", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 Toast.makeText(this, "Ingresa un nombre para el hobby", Toast.LENGTH_SHORT).show()
             }
         }
+
+
     }
 }

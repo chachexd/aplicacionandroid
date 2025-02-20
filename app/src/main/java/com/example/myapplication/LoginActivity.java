@@ -33,14 +33,14 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                validarLogin();
+                new Thread(() -> validarLogin()).start(); // Mueve la validación a otro hilo
             }
         });
 
         btnRegistrar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                registrarUsuario();
+                new Thread(() -> registrarUsuario()).start(); // Mueve el registro a otro hilo
             }
         });
     }
@@ -51,13 +51,18 @@ public class LoginActivity extends AppCompatActivity {
 
         if (!usuario.isEmpty() && !password.isEmpty()) {
             String passwordEncriptada = Seguridad.encriptarMD5(password);
-
             Usuario nuevoUsuario = new Usuario(usuario, passwordEncriptada);
-            dbConexion.insertarUsuario(db, nuevoUsuario);
+            boolean registrado = dbConexion.insertarUsuario(db, nuevoUsuario);
 
-            Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show();
+            runOnUiThread(() -> {
+                if (registrado) {
+                    Toast.makeText(this, "Usuario registrado correctamente", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Error al registrar usuario", Toast.LENGTH_SHORT).show();
+                }
+            });
         } else {
-            Toast.makeText(this, "Rellena todos los campos", Toast.LENGTH_SHORT).show();
+            runOnUiThread(() -> Toast.makeText(this, "Rellena todos los campos", Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -70,19 +75,20 @@ public class LoginActivity extends AppCompatActivity {
             String passwordGuardada = dbConexion.obtenerPasswordUsuario(db, usuario);
 
             if (passwordEncriptada.equals(passwordGuardada)) {
-                int usuarioId = dbConexion.obtenerIdUsuario(db, usuario); // Obtener el ID del usuario
-                Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show();
+                int usuarioId = dbConexion.obtenerIdUsuario(db, usuario);
 
-                // Redirigir a MainActivity con el ID del usuario
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                intent.putExtra("USUARIO_ID", usuarioId);
-                startActivity(intent);
-                finish();
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    intent.putExtra("USUARIO_ID", usuarioId);
+                    startActivity(intent);
+                    finish();
+                });
             } else {
-                Toast.makeText(this, "Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show();
+                runOnUiThread(() -> Toast.makeText(this, "Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show());
             }
         } else {
-            Toast.makeText(this, "Rellena todos los campos", Toast.LENGTH_SHORT).show();
+            runOnUiThread(() -> Toast.makeText(this, "Rellena todos los campos", Toast.LENGTH_SHORT).show());
         }
     }
 }
